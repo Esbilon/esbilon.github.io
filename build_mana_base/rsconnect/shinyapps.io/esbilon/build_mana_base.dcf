@@ -1,0 +1,10 @@
+name: build_mana_base
+title:
+username: esbilon
+account: esbilon
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12190814
+bundleId: 10401988
+url: https://esbilon.shinyapps.io/build_mana_base/
+version: 1

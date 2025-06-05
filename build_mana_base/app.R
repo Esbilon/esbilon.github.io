@@ -4,6 +4,7 @@ library(jsonlite)
 library(tidyverse)
 
 # to deploy: shinylive::export(appdir = "build_mana_base", destdir = "docs")
+# Updated to deploy: rsconnect::deployApp('build_mana_base')
 
 # NB: inequality signs do not seem to work with the API, <=, >=, <, >
 # leq signs and colon seem fine... ≤, ≥, :
@@ -100,6 +101,16 @@ build_mana_base <- function(
                    paste0("t:land is:mdfc is:spell e:mh3 id:", col_str))
   }
   
+  if ("verge" %in% types) {
+    query_vec <- c(query_vec,
+                   paste0("verge (e:dsk or e:dft) id:", col_str))
+  }
+  
+  if ("innslowland" %in% types) {
+    query_vec <- c(query_vec,
+                   paste0("t:land (e:vow or e:mid) o:'enters tapped unless you control two or more other lands' id:", col_str))
+  }
+  
   query_vec <- c(query_vec,
                  map_chr(intersect(types, land_nick), ~paste0("is:", .x)) %>% 
                    paste(collapse = " or ") %>% 
@@ -110,9 +121,7 @@ build_mana_base <- function(
   scryfall_list(query_str)
 }
 
-
-
-# Define UI for application that draws a histogram
+# Define UI
 ui <- fluidPage(
 
     # Application title
@@ -141,7 +150,8 @@ ui <- fluidPage(
                                          "storageland", "creatureland", 
                                          "triland", "tangoland", "snowbasic", 
                                          "basic", "surveilland", "channelland", 
-                                         "mdfc", "mh3dfc", "triome"),
+                                         "mdfc", "mh3dfc", "triome", "verge", 
+                                         "innslowland"),
                              selected = c("fetchland", "shockland", "basic",
                                           "surveilland", "dual", "triome"))
         ),
@@ -153,7 +163,7 @@ ui <- fluidPage(
     )
 )
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output) {
 
     output$cardlist <- renderText({
