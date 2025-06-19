@@ -37,7 +37,7 @@ scryfall_list <- function(query_str) {
   
   out_vec <- map_chr(content(sf_out)$data, ~.x$name)
   
-  out_vec <- c(query_str, out_vec)
+  # out_vec <- c(query_str, out_vec)
   
   c(paste0("N = ", length(out_vec)), out_vec) %>% 
     paste(collapse = "\n") %>% 
