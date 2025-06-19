@@ -11,7 +11,7 @@ library(tidyverse)
 
 base_url <- "https://api.scryfall.com"
 
-id_to_types <- function(col_str, query = "t") {
+id_to_types <- function(col_str, query = "t", suffix = NULL) {
   types <- str_split_1(col_str, "") %>% 
     str_replace_all(c("w" = "plains",
                       "u" = "island",
@@ -19,7 +19,7 @@ id_to_types <- function(col_str, query = "t") {
                       "r" = "mountain",
                       "g" = "forest"))
   
-  paste0(query, ":", types) %>% 
+  paste0(query, ":'", types, suffix, "'") %>% 
     paste(collapse = " or ") %>% 
     paste0("(", ., ")")
   
@@ -35,7 +35,9 @@ scryfall_list <- function(query_str) {
                              "/cards/search?q=",
                              query_html))
   
-  out_vec <- map_chr(content(sf_out)[[4]], ~.x$name)
+  out_vec <- map_chr(content(sf_out)$data, ~.x$name)
+  
+  out_vec <- c(query_str, out_vec)
   
   c(paste0("N = ", length(out_vec)), out_vec) %>% 
     paste(collapse = "\n") %>% 
@@ -111,10 +113,28 @@ build_mana_base <- function(
                    paste0("t:land (e:vow or e:mid) o:'enters tapped unless you control two or more other lands' id:", col_str))
   }
   
-  query_vec <- c(query_vec,
-                 map_chr(intersect(types, land_nick), ~paste0("is:", .x)) %>% 
-                   paste(collapse = " or ") %>% 
-                   paste0("(", ., ") id:", col_str))
+  if ("landcycler" %in% types) {
+    query_vec <- c(query_vec,
+                   id_to_types(col_str, query = "o", suffix = "cycling {1}"))
+  }
+  
+  if ("staples" %in% types) {
+    staples_list <- c("Karakas", 
+                      "Arena of Glory", 
+                      "Wasteland", 
+                      "Library of Alexandria")
+    
+    query_vec <- c(query_vec,
+                   paste0("(!'", paste(staples_list, collapse = "' or !'"), "') id:", col_str))
+  }
+  
+  if (length(intersect(types, land_nick)) > 0) {
+    query_vec <- c(query_vec,
+                   map_chr(intersect(types, land_nick), ~paste0("is:", .x)) %>% 
+                     paste(collapse = " or ") %>% 
+                     paste0("(", ., ") id:", col_str))
+    
+  }
   
   query_str <- paste0("(", paste(query_vec, collapse = ") or ("), ")")
   
@@ -151,7 +171,7 @@ ui <- fluidPage(
                                          "triland", "tangoland", "snowbasic", 
                                          "basic", "surveilland", "channelland", 
                                          "mdfc", "mh3dfc", "triome", "verge", 
-                                         "innslowland"),
+                                         "innslowland", "landcycler", "staples"),
                              selected = c("fetchland", "shockland", "basic",
                                           "surveilland", "dual", "triome"))
         ),
